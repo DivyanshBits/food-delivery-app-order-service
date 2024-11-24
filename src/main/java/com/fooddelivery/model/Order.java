@@ -1,69 +1,47 @@
 package com.fooddelivery.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
 
+import java.time.LocalDateTime;
 
-@Document(collection = "orders")  // This will map the class to the "orders" collection in MongoDB
+@Entity
+@Getter
+@Setter
+@Table(name = "orders")
 public class Order {
 
     @Id
-    private String  orderId;  // Unique identifier for each order
-    private String restaurantId;  // The ID of the restaurant making the order
-    private String menuItemId;  // The ID of the menu item being ordered
-    private String orderStatus;  // The current status of the order (ORDER_ACCEPTED, ORDER_REJECTED, etc.)
-    private String customerId;  // The ID of the customer who placed the order
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    // Constructors, getters, and setters
+    @NotNull(message = "Customer ID is required")
+    private Long customerId;
 
-    public Order() {
+    @NotNull(message = "Restaurant ID is required")
+    private Long restaurantId;
+
+    @DecimalMin(value = "0.0", inclusive = false, message = "Total amount must be greater than 0")
+    private Double totalAmount;
+
+    @Enumerated(EnumType.STRING)
+    @NotNull(message = "Order status is required")
+    private OrderStatus status;
+
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
     }
 
-    public Order(String orderId, String restaurantId, String menuItemId, String orderStatus, String customerId) {
-        this.orderId = orderId;
-        this.restaurantId = restaurantId;
-        this.menuItemId = menuItemId;
-        this.orderStatus = orderStatus;
-        this.customerId = customerId;
-    }
-
-    public String getOrderId() {
-        return orderId;
-    }
-
-    public void setOrderId(String orderId) {
-        this.orderId = orderId;
-    }
-
-    public String getRestaurantId() {
-        return restaurantId;
-    }
-
-    public void setRestaurantId(String restaurantId) {
-        this.restaurantId = restaurantId;
-    }
-
-    public String getMenuItemId() {
-        return menuItemId;
-    }
-
-    public void setMenuItemId(String menuItemId) {
-        this.menuItemId = menuItemId;
-    }
-
-    public String getOrderStatus() {
-        return orderStatus;
-    }
-
-    public void setOrderStatus(String orderStatus) {
-        this.orderStatus = orderStatus;
-    }
-
-    public String getCustomerId() {
-        return customerId;
-    }
-
-    public void setCustomerId(String customerId) {
-        this.customerId = customerId;
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

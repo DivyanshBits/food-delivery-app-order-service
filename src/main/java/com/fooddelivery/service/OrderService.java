@@ -1,45 +1,52 @@
 package com.fooddelivery.service;
 
+import com.fooddelivery.exception.OrderNotFoundException;
 import com.fooddelivery.model.Order;
 import com.fooddelivery.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 public class OrderService {
 
-    private final OrderRepository orderRepository;
-
     @Autowired
-    public OrderService(OrderRepository orderRepository) {
-        this.orderRepository = orderRepository;
-    }
+    private OrderRepository orderRepository;
 
-    // Create or update an order
-    public Order createOrUpdateOrder(Order order) {
+    public Order saveOrder(Order order) {
+        log.info("Saving order: {}", order);
         return orderRepository.save(order);
     }
 
-    // Fetch all orders by customer ID
-    public List<Order> getOrdersByCustomerId(String customerId) {
-        return orderRepository.findByCustomerId(customerId);
+    public Order getOrderById(Long id) {
+        log.info("Fetching order by ID: {}", id);
+        return orderRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("Order not found with ID: {}", id);
+                    return new OrderNotFoundException("Order not found with ID: " + id);
+                });
     }
 
-    // Fetch all orders by restaurant ID
-    public List<Order> getOrdersByRestaurantId(String restaurantId) {
-        return orderRepository.findByRestaurantId(restaurantId);
+    public List<Order> getAllOrders() {
+        log.info("Fetching all orders");
+        return orderRepository.findAll();
     }
 
-    // Fetch a specific order by order ID
-    public Optional<Order> getOrderById(String orderId) {
-        return orderRepository.findById(orderId);
+    public void deleteOrder(Long id) {
+        if (!orderRepository.existsById(id)) {
+            log.error("Order not found with ID: {}", id);
+            throw new OrderNotFoundException("Order not found with ID: " + id);
+        }
+        log.info("Deleting order with ID: {}", id);
+        orderRepository.deleteById(id);
     }
 
-    // Delete an order by order ID
-    public void deleteOrder(String orderId) {
-        orderRepository.deleteById(orderId);
+    public Page<Order> getAllOrders(Pageable pageable) {
+        return orderRepository.findAll(pageable);
     }
 }
